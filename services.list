@@ -1,0 +1,9 @@
+mounter.base
+mounter-extra.base
+udev.base
+mount-fstab-all.base
+check_paths.base
+hostname.plugin
+dhcp.plugin
+ready-indicator.plugin
+agetty.base

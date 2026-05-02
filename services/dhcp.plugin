@@ -1,0 +1,62 @@
+#!/bin/sh
+(
+. /etc/mininit/env.source
+LOOPBACK="lo"
+WIFI="auto"
+ETH="auto"
+
+getwifi() {
+    for inter in /sys/class/net/*; do
+        intface=$(basename "$inter")
+
+        [ "$intface" = "$LOOPBACK" ] && continue
+
+        case "$intface" in
+            wl*) echo "$intface"; return ;;
+        esac
+    done
+}
+
+geteth() {
+    for inter in /sys/class/net/*; do
+        intface=$(basename "$inter")
+
+        [ "$intface" = "$LOOPBACK" ] && continue
+
+        case "$intface" in
+            en*) echo "$intface"; return ;;
+        esac
+    done
+}
+if [ "$WIFI" = "auto" ] || [ -z "$WIFI" ]; then
+    WIFI=$(getwifi | head -n1)
+fi
+if [ "$ETH" = "auto" ] || [ -z "$ETH" ]; then
+    ETH=$(geteth | head -n1)
+fi
+
+ip link set "$LOOPBACK" up
+[ -n "$WIFI" ] && ip link set "$WIFI" up
+[ -n "$ETH" ] && ip link set "$ETH" up
+
+if [ -z "$(cat /proc/sys/kernel/hostname)" ]; then
+    ttylog "hostname is not set, refusing to start DHCP"
+    exit 0
+fi
+
+dhcp_int() {
+    face="$1"
+    ttylog "trying DHCP on $face"
+    udhcpc -i "$face" -H "$(cat /proc/sys/kernel/hostname)" -n -t 3 -T 5 -A 10 >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        ttylog "DHCP success on $face"
+        return 0
+    fi
+    return 1
+}
+
+[ -n "$ETH" ] && dhcp_it "$ETH" && exit 0
+[ -n "$WIFI" ] && dhcp_it "$WIFI" && exit 0
+
+echo "DHCP failed on all interfaces"
+) & # bg it

@@ -1,0 +1,9 @@
+#!/bin/sh
+. /etc/mininit/env.source
+if [ ! -e "/proc/sys/kernel/hostname" ]; then
+    ttylog "Could not detect /proc/sys/kernel/hostname! /proc may not be mounted yet or kernel does not support proc!"
+    exit 0
+fi
+hostname "$(cat /etc/hostname.conf)" && exit 0
+ttylog "hostname failed, skipping!"
+exit 0

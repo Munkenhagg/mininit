@@ -1,0 +1,51 @@
+#!/bin/sh
+. /etc/mininit/env.source
+exec >/dev/console 2>&1
+trap 'while wait 2>/dev/null; do :; done' CHLD
+services="$(cat /etc/mininit/services.list)"
+run() {
+    svc="$1"
+    if ! "/etc/mininit/services/$svc"; then
+        panic "$svc"
+    else
+        ttylog "finished target $svc"
+    fi
+}
+
+shutdown() {
+    kill -15 -1
+    sleep 3
+    sync
+    kill -9 -1
+    sync
+    umount -a -r -t no_rootfs,no_netdev
+    swapoff -a
+    mount -o remount,ro /
+    exec /sbin/poweroff -f
+}
+trap 'shutdown' INT TERM HUP
+
+panic() {
+    failsvc="$1"
+    ttylog "ERROR target $failsvc failed!"
+    if [ ! -e "/etc/mininit/services/fallbacks/$failsvc" ]; then
+        ttylog "Warning: target fallback for $failsvc does not exist, skipping!"
+        return 1
+    fi
+    ttylog "running fallback for $failsvc"
+    if ! "/etc/mininit/services/fallbacks/$failsvc"; then
+        ttylog "target $failsvc fallback errored! attempting to access the root account"
+        exec sulogin
+        ttylog "Root account exit. rebooting"
+        reboot
+    fi
+}
+
+for svc in $services; do
+    if [ -e "/etc/mininit/services/$svc" ]; then
+        ttylog "starting target $svc"
+        run $svc
+    else
+        ttylog "Warning: target $svc cannot be found, skipping!"
+    fi
+done

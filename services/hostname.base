@@ -1,0 +1,3 @@
+#!/bin/sh
+. /etc/mininit/env.source
+cat /etc/hostname > /proc/sys/kernel/hostname

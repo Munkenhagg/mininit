@@ -1,0 +1,16 @@
+#!/bin/sh
+. /etc/mininit/env.source
+
+TTY_LIST="1" # edit to add more ttys with "1 2 3 4 5"
+
+for tty in $TTY_LIST; do
+    ( 
+        while :; do
+            agetty -L 38400 "tty$tty" linux
+            sleep 1
+        done 
+    ) &
+done
+echo $! > /run/agetty_spawn.pid
+
+wait

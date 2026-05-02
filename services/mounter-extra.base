@@ -1,0 +1,12 @@
+#!/bin/sh
+. /etc/mininit/env.source
+mount -t devpts devpts /dev/pts -o gid=5,mode=620
+mount -t tmpfs tmpfs /run -o nosuid,nodev,mode=755
+mount -t tmpfs tmpfs /tmp
+mount -t tmpfs tmpfs /dev/shm
+mount -t cgroup2 none /sys/fs/cgroup
+mkdir -p /var/tmp
+
+chmod 1777 /var/tmp
+chmod 1777 /tmp
+chmod 1777 /dev/shm
