@@ -1,0 +1,5 @@
+#!/bin/sh
+. /etc/mininit/env.source
+
+ttylog "entering root account (sulogin.base)"
+exec sulogin

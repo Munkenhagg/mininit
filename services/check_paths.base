@@ -1,4 +1,5 @@
 #!/bin/sh
 . /etc/mininit/env.source
+
 mkdir -p /var/log
 touch /var/log/mininit.log

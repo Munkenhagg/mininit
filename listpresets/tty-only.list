@@ -3,10 +3,6 @@ mounter-extra.base
 mdev.base
 mount-fstab-all.base
 kmodules.plugin
-cpu-tune.plugin
-check_paths.base
 hostname.base
-dhcp.plugin
-login-tmpdirs.plugin
 ready-indicator.plugin
 agetty.base

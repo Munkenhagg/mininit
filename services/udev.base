@@ -1,8 +1,0 @@
-#!/bin/sh
-UDEVD=/sbin/udevd
-UDEVADM=/sbin/udevadm
-
-/sbin/echo "starting udevd"
-$UDEVD --daemon || exit 1
-$UDEVADM trigger --action=add || exit 1
-$UDEVADM settle 

@@ -1,0 +1,18 @@
+#!/bin/sh
+. /etc/mininit/env.source
+mkdir -p /var/run /var/log
+
+# current u
+touch /var/run/utmp
+chmod 664 /var/run/utmp
+chown root:utmp /var/run/utmp
+
+# history w
+touch /var/log/wtmp
+chmod 664 /var/log/wtmp
+chown root:utmp /var/log/wtmp
+
+# failed logins b
+touch /var/log/btmp
+chmod 600 /var/log/btmp
+chown root:utmp /var/log/btmp

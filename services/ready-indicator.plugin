@@ -1,3 +1,3 @@
 #!/bin/sh
-. /etc/mininit/
+. /etc/mininit/env.source
 echo "1" > /run/mininit.ready || exit 1

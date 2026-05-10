@@ -1,0 +1,12 @@
+#!/bin/sh
+. /etc/mininit/env.source
+
+MODULES="intel_uncore:intel_uncore_frequency:rfkill:thinkpad_acpi:coretemp"
+OIFS="$IFS"
+
+IFS=':'
+for m in $MODULES; do
+    [ ! -z "$m" ] && modprobe "$m"
+done
+unset IFS
+IFS="$OIFS"

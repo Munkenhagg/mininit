@@ -16,7 +16,16 @@ getwifi() {
         esac
     done
 }
-
+dhcp_int() {
+    face="$1"
+    ttylog "trying DHCP on $face"
+    udhcpc -i "$face" -n -t 3 -T 5 -A 10 >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        ttylog "DHCP success on $face"
+        return 0
+    fi
+    return 1
+}
 geteth() {
     for inter in /sys/class/net/*; do
         intface=$(basename "$inter")
@@ -44,19 +53,8 @@ if [ -z "$(cat /proc/sys/kernel/hostname)" ]; then
     exit 0
 fi
 
-dhcp_int() {
-    face="$1"
-    ttylog "trying DHCP on $face"
-    udhcpc -i "$face" -H "$(cat /proc/sys/kernel/hostname)" -n -t 3 -T 5 -A 10 >/dev/null 2>&1
-    if [ $? -eq 0 ]; then
-        ttylog "DHCP success on $face"
-        return 0
-    fi
-    return 1
-}
+[ -n "$ETH" ] && dhcp_int "$ETH" && exit 0
+[ -n "$WIFI" ] && dhcp_int "$WIFI" && exit 0
 
-[ -n "$ETH" ] && dhcp_it "$ETH" && exit 0
-[ -n "$WIFI" ] && dhcp_it "$WIFI" && exit 0
-
-echo "DHCP failed on all interfaces"
-) & # bg it
+ttylog "DHCP failed on all interfaces"
+) &

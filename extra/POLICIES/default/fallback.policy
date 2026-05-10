@@ -1,0 +1,14 @@
+# fallback policy - when a fallback errors. do not put fallback on any here
+fallback_mounter.base=alert_n_shutdown
+fallback_mounter-extra.base=alert_n_shutdown
+fallback_mdev.base=skip
+fallback_mount-fstab-all.base=skip
+fallback_kmodules.plugin=skip
+fallback_cpu-tune.plugin=skip
+fallback_check_paths.base=skip
+fallback_hostname.base=fallback
+fallback_dhcp.plugin=skip
+fallback_login-tmpdirs.plugin=skip
+fallback_ready-indicator.plugin=fallback
+fallback_agetty.base=fallback
+fallback_sulogin.base=alert_n_shutdown

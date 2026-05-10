@@ -1,0 +1,22 @@
+#!/bin/sh
+. /etc/mininit/env.source
+
+enabled="no" # set to yes to enable the plugin
+
+[ "$enabled" = "no" ] && ttylog "cpu-tuner is not enabled, aborting." && exit 0
+
+# CPU FREQUENCY - values are in Mhz, for example 3100 = 3.1Ghz, 400 = 400Mhz.
+CPU_FREQ="1800"
+
+# CACHE RATIO - lowering cache ratio can help reduce temps on most cpu's but too low and instability comes. works best with slight underclock and undervolt
+CR_MIN="1800"
+CR_MAX="1800"
+
+if [ "$enabled" = "yes" ]; then
+    ttylog "setting CPU frequency ($CPU_FREQ)"
+    echo "${CPU_FREQ}000" > /sys/devices/system/cpu/cpu*/cpufreq/scaling_max_freq
+    ttylog "setting minimum cache ratio ($CR_MIN)"
+    echo "${CR_MIN}000" > /sys/devices/system/cpu/intel_uncore_frequency/package_00_die_00/min_freq_khz
+    ttylog "setting maximum cache ratio ($CR_MAX)"
+    echo "${CR_MAX}000" > /sys/devices/system/cpu/intel_uncore_frequency/package_00_die_00/max_freq_khz
+fi

@@ -1,0 +1,11 @@
+#!/bin/sh
+. /etc/mininit/env.source
+set -e
+
+# change to your preferred /dev populator, may not work with systemd-udevd. you usually have to change arguments aswell
+MDEV="/sbin/busybox mdev" 
+
+ttylog "Scanning /sys and populating /dev using $MDEV"
+$MDEV -s
+ttylog "starting mdev daemon"
+$MDEV -d

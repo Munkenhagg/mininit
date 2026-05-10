@@ -1,0 +1,14 @@
+# fallback nonexistent policy - when there is no fallback but service policy. do not put fallback on any here
+no_fallback_mounter.base=skip
+no_fallback_mounter-extra.base=skip
+no_fallback_mdev.base=skip
+no_fallback_mount-fstab-all.base=skip
+no_fallback_kmodules.plugin=skip
+no_fallback_cpu-tune.plugin=skip
+no_fallback_check_paths.base=skip
+no_fallback_hostname.base=skip
+no_fallback_dhcp.plugin=skip
+no_fallback_login-tmpdirs.plugin=skip
+no_fallback_ready-indicator.plugin=skip
+no_fallback_agetty.base=enter_root_account
+no_fallback_sulogin.base=alert_n_shutdown

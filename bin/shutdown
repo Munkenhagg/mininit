@@ -1,0 +1,11 @@
+#!/bin/sh
+. /etc/mininit/env.source
+
+kill -15 -1
+sleep 2
+sync
+kill -9 -1
+sync
+umount -a -r -t no_rootfs,no_netdev
+swapoff -a
+mount -o remount,ro /

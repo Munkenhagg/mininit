@@ -1,45 +1,86 @@
 #!/bin/sh
 . /etc/mininit/env.source
 exec >/dev/console 2>&1
-trap 'while wait 2>/dev/null; do :; done' CHLD
-services="$(cat /etc/mininit/services.list)"
+mount -o remount,rw /
+ttylog "starting boot at $(date)"
+echo "starting boot at $(date)" >> /var/log/mininit/timeblame.log
+start_time="$(date +%s%N)"
+
+mininit_mode="standard"
+mininit_service_list="/etc/mininit/services.list"
+services="$(cat "$mininit_service_list")"
+POLICY_D=/etc/mininit/extra/POLICIES/default
+SVC_POLICY="$POLICY_D/service.policy"
+SVCFB_POLICY="$POLICY_D/fallback.policy"
+SVCFBNE_POLICY="$POLICY_D/no_fallback.policy"
+
+mkdir -p /etc/mininit/tmp
+mount -t tmpfs tmpfs /etc/mininit/tmp
+cat "$SVC_POLICY" "$SVCFB_POLICY" "$SVCFBNE_POLICY" > /etc/mininit/tmp/policy.cache
+printf "\n" >> /etc/mininit/tmp/policy.cache
+
+get_policy() {
+    target_service="$1"
+    while IFS='=' read currentservice policy; do
+        case "$currentservice" in
+            \#*) continue ;;
+        esac
+        [ "$currentservice" = "$target_service" ] && printf '%s\n' "$policy" && return 0
+    done < /etc/mininit/tmp/policy.cache
+}
 run() {
     svc="$1"
-    if ! "/etc/mininit/services/$svc"; then
+    timeout 30 "/etc/mininit/services/$svc"
+    RETURN=$?
+    now="$(date +%s%N)"
+    if [ ! $RETURN -eq 0 ]; then
         panic "$svc"
     else
         ttylog "finished target $svc"
+        timelog "$(((now - start_time) / 1000000))" "$svc" >> /var/log/mininit/time.log
     fi
 }
-
-shutdown() {
-    kill -15 -1
-    sleep 3
-    sync
-    kill -9 -1
-    sync
-    umount -a -r -t no_rootfs,no_netdev
-    swapoff -a
-    mount -o remount,ro /
-    exec /sbin/poweroff -f
-}
-trap 'shutdown' INT TERM HUP
 
 panic() {
     failsvc="$1"
     ttylog "ERROR target $failsvc failed!"
+    case "$(get_policy $failsvc)" in
+        skip) ttylog "Warning: target $failsvc failed, skipping!"; return 0 ;;
+        enter_root_account) ttylog "Warning: target $failsvc failed, entering root account"; sulogin ;;
+        fallback) ttylog "Warning: target $failsvc failed, running fallback..." ;;
+        alert_n_shutdown) ttylog "Warning: target $failsvc failed! shutting down!"; sleep 3; mininit poweroff ;;
+        *) ttylog "Warning: target $failsvc failed, skipping!"; return 0 ;;
+    esac
+ 
     if [ ! -e "/etc/mininit/services/fallbacks/$failsvc" ]; then
-        ttylog "Warning: target fallback for $failsvc does not exist, skipping!"
-        return 1
+        case "$(get_policy no_fallback_$failsvc)" in
+            skip) ttylog "Warning: no fallback exists for $failsvc, skipping!"; return 0 ;;
+            enter_root_account) ttylog "Warning: no fallback exists for $failsvc, entering root account"; sulogin ;;
+            alert_n_shutdown) ttylog "Warning: no fallback exists for $failsvc! shutting down!"; sleep 3; mininit poweroff ;;
+            *) ttylog "Warning: target $failsvc failed, skipping!"; return 0 ;;
+        esac
     fi
     ttylog "running fallback for $failsvc"
     if ! "/etc/mininit/services/fallbacks/$failsvc"; then
-        ttylog "target $failsvc fallback errored! attempting to access the root account"
-        exec sulogin
-        ttylog "Root account exit. rebooting"
-        reboot
+        case "$(get_policy fallback_$failsvc)" in
+            skip) ttylog "Warning: fallback for $failsvc failed, skipping!"; return 0 ;;
+            enter_root_account) ttylog "Warning: fallback for $failsvc, entering root account"; sulogin ;;
+            alert_n_shutdown) ttylog "Warning: fallback for $failsvc failed! shutting down!"; sleep 3; mininit poweroff ;;
+            *) ttylog "Warning: target $failsvc failed, skipping!"; return 0 ;;
+        esac
     fi
 }
+cmdline() {
+    for token in $(cat /proc/cmdline); do
+        case "$token" in
+            "mininit.standard") mininit_mode="standard" ;;
+            "mininit.rescue") mininit_mode="rescue" ;;
+        esac
+    done < /proc/cmdline
+}
+cmdline
+[ "$mininit_mode" = "standard" ] && services="$(cat "$mininit_service_list")"
+[ "$mininit_mode" = "rescue" ] && services="$(cat "/etc/mininit/rescue.list")"
 
 for svc in $services; do
     if [ -e "/etc/mininit/services/$svc" ]; then
@@ -49,3 +90,26 @@ for svc in $services; do
         ttylog "Warning: target $svc cannot be found, skipping!"
     fi
 done
+ttylog "All services finished!"
+make_signaler() {
+    rm -f /run/mininit.signal
+    mkfifo -m 666 /run/mininit.signal
+}
+make_signaler
+
+while read cmd; do
+    case "$cmd" in
+        "poweroff") mininit poweroff ;;
+        "reboot") mininit reboot ;;
+        "halt") mininit halt ;;
+        "shutdown_logic_only") mininit shutdownlogic ;;
+        *) printf "Unknown operation: $cmd"; make_signaler
+    esac
+done < /run/mininit.signal &
+signal_handler_pid=$!
+echo $signal_handler_pid > /run/signal_handler.pid
+unset signal_handler_pid
+
+mininit reaper
+
+sleep infinity

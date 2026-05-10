@@ -1,4 +1,4 @@
 #!/bin/sh
 . /etc/mininit/env.source
-ttylog "ready-indicator failed, attempting to write to /etc!"
+ttylog "ready-indicator fallback called, attempting to write to /etc instead of /run!"
 echo "1" > /etc/mininit.ready || ttylog "failed to write ready indicator, skipping!" && exit 0

@@ -1,3 +1,4 @@
 #!/bin/sh
 . /etc/mininit/env.source
+ttylog "mounting all using mount -a following fstab mounts"
 mount -a

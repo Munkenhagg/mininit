@@ -1,0 +1,14 @@
+# Regular policy - when a service errors 
+mounter.base=alert_n_shutdown
+mounter-extra.base=alert_n_shutdown
+mdev.base=skip
+mount-fstab-all.base=skip
+kmodules.plugin=skip
+cpu-tune.plugin=skip
+check_paths.base=skip
+hostname.base=fallback
+dhcp.plugin=skip
+PAM-fix.plugin=skip
+ready-indicator.plugin=fallback
+agetty.base=enter_root_account
+sulogin.base=alert_n_shutdown

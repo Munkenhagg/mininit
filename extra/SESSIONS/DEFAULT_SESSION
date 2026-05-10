@@ -1,0 +1,18 @@
+#!/bin/sh
+. /etc/mininit/env.source
+
+UIDNOW="$(id -u)"
+GIDNOW="$(id -g)"
+
+export XDG_RUNTIME_DIR="/run/user/$UIDNOW"
+
+mkdir -p "$XDG_RUNTIME_DIR"
+chown "$UIDNOW:$GIDNOW" "$XDG_RUNTIME_DIR"
+chmod 700 "$XDG_RUNTIME_DIR"
+
+. /etc/mininit/extra/SESSIONS/session.conf
+if [ -z "$PREFER_SHELL" ]; then
+    echo "PREFER_SHELL not set or provided, defaulting to /bin/sh"
+    PREFER_SHELL="/bin/sh"
+fi
+exec "$PREFER_SHELL"
