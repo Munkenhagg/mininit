@@ -19,7 +19,7 @@ getwifi() {
 dhcp_int() {
     face="$1"
     ttylog "trying DHCP on $face"
-    udhcpc -i "$face" -n -t 3 -T 5 -A 10 >/dev/null 2>&1
+    busybox udhcpc -i "$face" -n -t 3 -T 5 -A 10 >/dev/null 2>&1
     if [ $? -eq 0 ]; then
         ttylog "DHCP success on $face"
         return 0
